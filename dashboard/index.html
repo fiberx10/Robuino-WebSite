@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5" />
+    <link rel="stylesheet" href="style.css">
+    <link rel = "icon" href ="./../icon/icon.png" type = "image/x-icon">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,900;1,700&display=swap" rel="stylesheet">
+    <script src="https://code.jquery.com/jquery-3.4.1.js"></script>
+    </script>
+    <script src="https://kit.fontawesome.com/7f2e3eac1e.js" crossorigin="anonymous"></script> 
+    <title>King House - DashBoard</title>
+  </head>
+
+  <body>
+      
+    <div class="background-overlay">
+        <div id="container">
+          <div class="panel-container">
+                <div class="panel">
+              
+                    <h1 class="panel_heading"><a href="./../index.html">King House</a></h1>
+                    <p class="panel_subheading">
+                        DashBoard
+                    </p> 
+                     <br>  
+                    <form action="" method="get">
+                        <div class="center" id="ledstat">Led digital control</div><br>
+                        <div class="buttonTwo">
+                            <div>
+                                <button type="button" id="D1-on" class="button button1" onclick="onLed()">ON</button>
+                            </div>
+                            <div>
+                                <button type="button" id="D1-off" class="button button3" onclick="offLed()" >OFF</button>
+                            </div>
+                        </div>
+                        
+
+                        <br><br>
+                        <div class="center">Led pwm control</div><br>
+                        
+                        <div class="center" id="pwm">
+                            <label for="led" class="labelForRange" id="led">50</label>
+                            <input class="slide" type="range" min="0" max="250" value="50" id="led" onchange="showVal(this.value)">
+                        </div>
+                        
+                        <br>
+                        <br>
+
+                        <div class="center">servo motor angle control</div><br>
+                        
+                        <div class="center" id="servomotor">
+                            <label class="labelForRange" for="servo" id="servo">50</label>
+                            <input class="slide" type="range" min="0" max="180" value="50" id="servo">
+                        </div>
+
+                        <br>
+                    </form>
+
+                    <br><br>
+
+                    <div class="dhtLabel">
+                        <div>Temperature</div>
+                        <div>Humidity</div>
+                    </div>
+
+                    <div class="dht">
+                        <div class="gauge">
+                            <div class="gauge__body">
+                              <div class="gauge__fill"></div>
+                              <div class="gauge__cover"></div>
+                            </div>
+                        </div>
+
+                        <div class="gauge2">
+                            <div class="gauge2__body">
+                              <div class="gauge2__fill"></div>
+                              <div class="gauge2__cover"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <br><br><br><br>
+
+                    <div class="kio">
+                        <p class="consents">  Robuino.tech <br><span class="tempBy">  &copy; Copyright 2022 <a href="https://robuino.tech/" target="_blank">by Rhiba</a></span></p>
+                    </div>
+                    
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <script>
+        const gaugeElement = document.querySelector(".gauge");
+
+        function setGaugeValue(gauge, value) {
+        if (value < 0 || value > 1) {
+            return;
+        }
+
+        gauge.querySelector(".gauge__fill").style.transform = `rotate(${
+            value / 2
+        }turn)`;
+        gauge.querySelector(".gauge__cover").textContent = `${Math.round(
+            value * 100
+        )}°C`;
+        }
+
+        const gauge2Element = document.querySelector(".gauge2");
+
+        function setGauge2Value(gauge, value) {
+        if (value < 0 || value > 1) {
+            return;
+        }
+
+        gauge.querySelector(".gauge2__fill").style.transform = `rotate(${
+            value / 2
+        }turn)`;
+        gauge.querySelector(".gauge2__cover").textContent = `${Math.round(
+            value * 100
+        )}%`;
+        }
+
+        // setGaugeValue(gaugeElement, 0.3);
+        // setGauge2Value(gauge2Element, 0.45);
+
+        window.onload = function() {
+            loaddata();
+        };
+        function loaddata(){
+                var url = "https://myhouseking.000webhostapp.com/api/sensors/read_all.php";
+                var url2 = "https://myhouseking.000webhostapp.com/api/actuators/read_alll.php";
+                $.getJSON(url, function(data) {
+                var val= data;
+                var humid=(data['sensors'][(Object.keys(data['sensors']).length)-1]['hum']);
+                var temper=(data['sensors'][(Object.keys(data['sensors']).length)-1]['temp']);
+                setGauge2Value(gauge2Element, humid/100);
+                setGaugeValue(gaugeElement, temper/100);
+            });
+                
+                $.getJSON(url2, function(data) {
+                var val= data;
+                var led= val.led[0].status;
+				var ledpwm= val.led[1].status
+				var servo= val.led[2].status
+               
+                document.getElementById("ledstat").innerHTML = "Led digital control ( status : is "+led+" )" 
+                document.getElementById("pwm").innerHTML = "<label class=\"labelForRange\" for=\"led\" id=\"led\">"+ledpwm+"</label><input class=\"slide\"  type=\"range\" min=\"0\" max=\"250\" value=\""+ledpwm+"\" id=\"led\" onchange=\"showVal(this.value)\">"
+                document.getElementById("servomotor").innerHTML = "<label class=\"labelForRange\" for=\"servo\" id=\"servo\">"+servo+"</label><input class=\"slide\" type=\"range\" min=\"0\" max=\"180\" value=\""+servo+"\" id=\"servo\" onchange=\"showVal2(this.value)\">"
+
+            });
+        
+        
+            }
+
+        window.setInterval(function(){
+            loaddata();
+        }, 5000);
+
+
+        function showVal(newVal){
+            var url3= "https://myhouseking.000webhostapp.com/api/actuators/update.php?id=2&status="+newVal;
+        
+            $.getJSON(url3, function(data) {
+                console.log(data)
+            });
+            
+            document.getElementById("led").innerHTML=newVal;
+        }
+
+        function showVal2(newVal){
+            var url4= "https://myhouseking.000webhostapp.com/api/actuators/update.php?id=3&status="+newVal;
+        
+            $.getJSON(url4, function(data) {
+                console.log(data)
+            });
+    
+            document.getElementById("servo").innerHTML=newVal;
+        }
+
+        function onLed(){
+            var url5= "https://myhouseking.000webhostapp.com/api/actuators/update.php?id=1&status=on";
+        
+            $.getJSON(url5, function(data) {
+                console.log(data)
+            });
+        }
+
+        function offLed(){
+            var url6= "https://myhouseking.000webhostapp.com/api/actuators/update.php?id=1&status=off";
+        
+            $.getJSON(url6, function(data) {
+                console.log(data)
+            });
+        }
+    
+    </script>
+</body>
+</html>
